@@ -21,7 +21,7 @@ function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtyp
 %% initialize
 % need to know when signal contains speech to remode landmark events
 % outside speech. this is t
-if nargin<3
+if nargin<3 || isempty(onsOff)
     onsOff= [1/soundfs length(sound)/soundfs];
 end
 
@@ -40,7 +40,7 @@ switch envtype
         rectsound  = abs(sound);
         [b,a] = butter(2, 10/(soundfs/2));
         cenv = filtfilt(b, a, rectsound);
-        downsenv = resample(cenv, (1:length(cenv))/soundfs, 100);
+        downsenv = resample(cenv, (1:length(cenv))/soundfs, envfs);
         downsenv(downsenv <0) =0;
         env = downsenv;
 end
@@ -59,7 +59,7 @@ peakRate = allTS(6,:);
 end
 
 %% specific loudness function for envelope extraction
-function Nm = Syl_1984_Schotola(p,fs)
+function Nm = Syl_1984_Schotola(p,fs, targetFs)
 %
 %This identifies vowell nuclei according to the method of Schotola (1984).
 %The calculation of modifed total loudness is identical to that of
@@ -84,7 +84,7 @@ tN = (0:N-1)'./fs;
 T = 1/fs;
 
 %Loudness functions will be sampled at 100 Hz
-sr = 100;
+sr = targetFs; % 100 is default
 N1 = fix(N*sr/fs);
 t1 = (0:N1-1)'./sr;
 
