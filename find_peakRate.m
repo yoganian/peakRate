@@ -1,10 +1,11 @@
-function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtype)
+function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtype, envfs)
 % function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtype)
 % Inputs: 
 %   sound - time x 1, sound waveform
 %   soundfs - 1x1, sampling frequency of sound
 %   onsOff  - 1 x 2 times of stimulus onset and offset in sound
 %   envtype: 'loudness' (default), or 'broadband': specific loudness envelope or broadband envelope
+%   envfs - sampling frequency of output envelope and peakRate
 % Output: 
 %   env - amplitude envelope of input
 %   peakRate - discrete time series of peakRate events in envelope
@@ -17,6 +18,8 @@ function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtyp
 
 % (c) Yulia Oganian, Oct 2019
 % yulia.oganian@ucsf.edu
+% edited: yulia oganian, jan 2023 - adjusted to variable sampling frequency
+% in output.
 
 %% initialize
 % need to know when signal contains speech to remode landmark events
@@ -32,10 +35,10 @@ if nargin<4, envtype = 'loudness'; end
 % trough-to-trough
 cleanup_flag = 0;
 %% get envelope
-envfs=100;
+%envfs=100;
 switch envtype
     case 'loudness' %% specific loudness
-        env = Syl_1984_Schotola(sound, soundfs);        
+        env = Syl_1984_Schotola(sound, soundfs, envfs);        
     case 'broadband' %% broadband envelope        
         rectsound  = abs(sound);
         [b,a] = butter(2, 10/(soundfs/2));
