@@ -1,10 +1,11 @@
-function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtype)
+function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtype, envfs)
 % function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtype)
 % Inputs: 
 %   sound - time x 1, sound waveform
 %   soundfs - 1x1, sampling frequency of sound
 %   onsOff  - 1 x 2 times of stimulus onset and offset in sound
 %   envtype: 'loudness' (default), or 'broadband': specific loudness envelope or broadband envelope
+%   envfs - sampling frequency of output envelope and peakRate
 % Output: 
 %   env - amplitude envelope of input
 %   peakRate - discrete time series of peakRate events in envelope
@@ -17,11 +18,13 @@ function [env, peakRate, peakEnv] = find_peakRate(sound, soundfs, onsOff, envtyp
 
 % (c) Yulia Oganian, Oct 2019
 % yulia.oganian@ucsf.edu
+% edited: yulia oganian, jan 2023 - adjusted to variable sampling frequency
+% in output.
 
 %% initialize
 % need to know when signal contains speech to remode landmark events
 % outside speech. this is t
-if nargin<3
+if nargin<3 || isempty(onsOff)
     onsOff= [1/soundfs length(sound)/soundfs];
 end
 
@@ -32,15 +35,15 @@ if nargin<4, envtype = 'loudness'; end
 % trough-to-trough
 cleanup_flag = 0;
 %% get envelope
-envfs=100;
+%envfs=100;
 switch envtype
     case 'loudness' %% specific loudness
-        env = Syl_1984_Schotola(sound, soundfs);        
+        env = Syl_1984_Schotola(sound, soundfs, envfs);        
     case 'broadband' %% broadband envelope        
         rectsound  = abs(sound);
         [b,a] = butter(2, 10/(soundfs/2));
         cenv = filtfilt(b, a, rectsound);
-        downsenv = resample(cenv, (1:length(cenv))/soundfs, 100);
+        downsenv = resample(cenv, (1:length(cenv))/soundfs, envfs);
         downsenv(downsenv <0) =0;
         env = downsenv;
 end
@@ -59,7 +62,7 @@ env = env';
 end
 
 %% specific loudness function for envelope extraction
-function Nm = Syl_1984_Schotola(p,fs)
+function Nm = Syl_1984_Schotola(p,fs, targetFs)
 %
 %This identifies vowell nuclei according to the method of Schotola (1984).
 %The calculation of modifed total loudness is identical to that of
@@ -84,7 +87,7 @@ tN = (0:N-1)'./fs;
 T = 1/fs;
 
 %Loudness functions will be sampled at 100 Hz
-sr = 100;
+sr = targetFs; % 100 is default
 N1 = fix(N*sr/fs);
 t1 = (0:N1-1)'./sr;
 
