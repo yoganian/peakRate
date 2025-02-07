@@ -47,7 +47,7 @@ end
 %% get landmarks in envelope
 %
 % vector marking speech onset and offset times.
-onsOffenv = zeros(length(env),2);
+onsOffenv = zeros(2,length(env));
 onsOffenv(1,ceil(onsOff(1)*envfs))=1;
 onsOffenv(2,round(onsOff(2)*envfs))=1;
 
@@ -55,7 +55,7 @@ onsOffenv(2,round(onsOff(2)*envfs))=1;
 allTS = find_landmarks(env,  onsOffenv,cleanup_flag); 
 peakEnv = allTS(4,:);
 peakRate = allTS(6,:);
-
+env = env';
 end
 
 %% specific loudness function for envelope extraction
